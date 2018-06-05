@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 
+	"flag"
+
 	"github.com/fatih/color"
 )
 
@@ -91,6 +93,28 @@ type internalConfig struct {
 	AllowedTypes    []string `json:"types"`
 }
 
+func generateDefaultConfig() {
+	configuration := internalConfig{
+		HeaderMaxLength: 72,
+		AllowedTypes: []string{
+			"build",
+			"ci",
+			"docs",
+			"feat",
+			"fix",
+			"perf",
+			"refactor",
+			"revert",
+			"style",
+			"test"},
+	}
+	out, err := json.MarshalIndent(configuration, "", "  ")
+	if err != nil {
+		fmt.Println("can't generate config %v", err)
+	}
+	fmt.Printf("%s", string(out))
+}
+
 func readConfig() (LintConfig, error) {
 	lintConfig := LintConfig{}
 
@@ -119,7 +143,7 @@ func readConfig() (LintConfig, error) {
 	return lintConfig, nil
 }
 
-func main() {
+func parseAndCheck() {
 	errorColor := color.New(color.FgRed)
 	neutralColor := color.New(color.Bold)
 	goodColor := color.New(color.FgGreen, color.Bold)
@@ -151,5 +175,33 @@ func main() {
 		}
 		errorColor.Print("✖\t")
 		neutralColor.Printf("Found %v problems\n", len(lints))
+	}
+}
+
+func main() {
+	generateConfigCommand := flag.NewFlagSet("config-generate", flag.ExitOnError)
+	flag.Usage = func() {
+		fmt.Printf("Usage: commitlint [command]\n")
+		flag.PrintDefaults()
+
+		fmt.Println("\ncommands:")
+		fmt.Println("\tconfig-generate: print default config")
+	}
+	flag.Parse()
+
+	if len(os.Args) < 2 {
+		parseAndCheck()
+	} else {
+		switch os.Args[1] {
+		case "config-generate":
+			generateConfigCommand.Parse(os.Args[2:])
+		default:
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	}
+
+	if generateConfigCommand.Parsed() {
+		generateDefaultConfig()
 	}
 }
