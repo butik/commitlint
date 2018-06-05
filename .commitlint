@@ -1,0 +1,4 @@
+{
+  "header-max-length": 72,
+  "types": ["test1", "test2"]
+}
